@@ -1,31 +1,46 @@
 package com.leesin;
 
+import com.leesin.discovery.IServiceDiscovery;
+import org.springframework.util.StringUtils;
+
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 
 /**
- * @description:
- * @author: Leesin.Dong
- * @date: Created in 2020/3/30 10:00
- * @version: ${VERSION}
- * @modified By:
+ * 腾讯课堂搜索 咕泡学院
+ * 加群获取视频：608583947
+ * 风骚的Michael 老师
  */
 public class RemoteInvocationHandler implements InvocationHandler {
-    String host;
-    String port;
-    public RemoteInvocationHandler(String host, int port) {
+
+    private IServiceDiscovery serviceDiscovery;
+    private String version;
+
+    public RemoteInvocationHandler(IServiceDiscovery serviceDiscovery, String version) {
+        this.serviceDiscovery=serviceDiscovery;
+        this.version=version;
     }
 
     @Override
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-        RpcRequest rpcRequest = new RpcRequest();
+        //请求数据的包装
+        RpcRequest rpcRequest=new RpcRequest();
         rpcRequest.setClassName(method.getDeclaringClass().getName());
         rpcRequest.setMethodName(method.getName());
+        rpcRequest.setParamTypes(method.getParameterTypes());
         rpcRequest.setParameters(args);
-        rpcRequest.setVersion("v1.0");
+        rpcRequest.setVersion(version);
+        String serviceName=rpcRequest.getClassName();
 
-        RpcNetTransport rpcNetTransport = new RpcNetTransport(host,port);
-        Object result = rpcNetTransport.send(rpcRequest);
+        if(!StringUtils.isEmpty(version)){
+            serviceName=serviceName+"-"+version;
+        }
+        //这里拿到address
+        String serviceAddress=serviceDiscovery.discovery(serviceName);
+        //远程通信
+        RpcNetTransport netTransport=new RpcNetTransport(serviceAddress);
+        Object result=netTransport.send(rpcRequest);
+
         return result;
     }
 }

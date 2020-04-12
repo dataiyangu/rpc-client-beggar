@@ -1,16 +1,24 @@
 package com.leesin;
 
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+
 /**
  * Hello world!
+ *
  */
-public class App {
+public class App 
+{
+    public static void main( String[] args ) throws InterruptedException {
+        ApplicationContext context=new
+                AnnotationConfigApplicationContext(SpringConfig.class);
+        RpcProxyClient rpcProxyClient=context.getBean(RpcProxyClient.class);
 
-    public static void main(String[] args) {
-        RpcProxyClient rpcProxyClient = new RpcProxyClient();
-        // IHelloService helloService = rpcProxyClient.clientProxy(IHelloService.class,"localhost", 8080);
-        // String shuai_bi = helloService.sayHello("shuai bi");
-        IpaymentService helloService = (IpaymentService) rpcProxyClient.clientProxy(IpaymentService.class,"localhost", 8080);
-        String shuai_bi = helloService.dopay();
-        System.out.println(shuai_bi);
+        IHelloService iHelloService=rpcProxyClient.clientProxy
+                (IHelloService.class,"v2.0");
+        for(int i=0;i<100;i++) {
+            Thread.sleep(2000);
+            System.out.println(iHelloService.sayHello(1.0));
+        }
     }
 }
